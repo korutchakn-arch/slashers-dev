@@ -145,9 +145,7 @@ function ENT:Use( activator, caller )
 end
 
 function ENT:OnRemove()
-	local owner = self:GetOwner()
-	if IsValid(owner) and owner:IsPlayer() and owner.normWalk then
-		owner:SetWalkSpeed(owner.normWalk)
-		owner:SetRunSpeed(owner.normWalk)
+	if self:IsPlayer() then
+		self:GetOwner():SetWalkSpeed(ply.normWalk)
 	end
 end
