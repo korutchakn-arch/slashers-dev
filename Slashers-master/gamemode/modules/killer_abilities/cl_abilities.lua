@@ -256,61 +256,55 @@ end
 hook.Add("HUDPaintBackground", "sls_ka_proxy_drawIconOnProxy", KA_proxy_drawIconOnProxy)
 
 -----------------------------------------------------------
--- BATES — Mother radar whisper audio
--- Sounds: whisper_loop_high/medium/small.wav
+-- BATES — Mother radar visual warning
+-- Indicator: colored circle + text in top-right, Killer only
 -----------------------------------------------------------
 
--- Keep a reference to the currently playing looped station
-GM.SoundPlayed_bates = nil
-GM.oldLevel_bates    = nil
+local bates_distLevel = 0
 
-local function PlaySoundMother_bates(file)
-    if IsValid(GM.SoundPlayed_bates) then
-        GM.SoundPlayed_bates:Stop()
-    end
-    sound.PlayFile(file, "", function(station, num, err)
-        if IsValid(station) then
-            station:Play()
-            station:EnableLooping(true)
-            GM.SoundPlayed_bates = station
-        end
-    end)
-end
-
-local function StopSoundMother_bates()
-    if IsValid(GM.SoundPlayed_bates) then
-        GM.SoundPlayed_bates:Stop()
-        GM.SoundPlayed_bates = nil
-    end
-end
-
-local function SoundToPlay_bates(level)
-    if LocalPlayer():Team() == TEAM_SPECTATOR then return end
-    if level == 3 then
-        PlaySoundMother_bates("sound/slashers/effects/whisper_loop_high.wav")
-    elseif level == 2 then
-        PlaySoundMother_bates("sound/slashers/effects/whisper_loop_medium.wav")
-    elseif level == 1 then
-        PlaySoundMother_bates("sound/slashers/effects/whisper_loop_small.wav")
-    else
-        StopSoundMother_bates()
-    end
-end
-
--- Received from server when survivor→mother distance changes
+-- Received from server when survivor→mother distance changes (0–3)
 net.Receive("sls_motherradar", function(len)
-    local distLevel = net.ReadUInt(2)
-    if GM.oldLevel_bates ~= distLevel then
-        GM.oldLevel_bates = distLevel
-        SoundToPlay_bates(distLevel)
-    end
+    bates_distLevel = net.ReadUInt(2)
 end)
 
--- Stop audio when round ends
-local function KA_bates_autoEnd()
-    StopSoundMother_bates()
+local ICON_TARGET_BATES = Material("icons/icon_target.png")
+
+local function KA_bates_HUDPaint()
+    if bates_distLevel == 0 then return end
+    if LocalPlayer():Team() ~= TEAM_KILLER then return end
+
+    local col
+    if bates_distLevel == 1 then
+        col = Color(220, 180, 0)   -- Yellow
+    elseif bates_distLevel == 2 then
+        col = Color(220, 90, 0)    -- Orange
+    else
+        col = Color(200, 30, 30)   -- Red (level 3)
+    end
+
+    local x = ScrW() - 110
+    local y = 10
+    local sz = 96
+
+    -- Filled circle background
+    draw.RoundedBox(sz / 2, x, y, sz, sz, col)
+
+    -- Target icon centred inside
+    surface.SetDrawColor(Color(255, 255, 255))
+    surface.SetMaterial(ICON_TARGET_BATES)
+    surface.DrawTexturedRect(x, y, sz, sz)
+
+    -- Proximity label
+    local label = bates_distLevel == 1 and "LOW" or bates_distLevel == 2 and "MEDIUM" or "HIGH"
+    draw.SimpleText(label, "DermaDefaultBold", x + sz / 2, y + sz + 12, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 end
-hook.Add("sls_round_End", "sls_ka_bates_autoEnd", KA_bates_autoEnd)
+hook.Add("HUDPaintBackground", "sls_ka_bates_HUDPaint", KA_bates_HUDPaint)
+
+-- Reset radar when round ends
+local function KA_bates_End()
+    bates_distLevel = 0
+end
+hook.Add("sls_round_End", "sls_ka_bates_End", KA_bates_End)
 
 -----------------------------------------------------------
 -- INTRUDER — Red halo around nearby traps for shy girl
