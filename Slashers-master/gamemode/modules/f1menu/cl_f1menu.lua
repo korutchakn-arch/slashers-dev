@@ -98,7 +98,6 @@ function ShowPlayerScreen(TeamName,TeamText,CharacName,CharacText,ImageCharac,Ti
 		timer.Simple( Time-0.3, function()
 			img_charac:MoveTo((ScrW() /2) - (img_charac:GetWide()/2)  ,0,0.5,0,1)
 			DescriptionBox:MoveTo((ScrW() /2) - (DescriptionBox:GetWide()/2.5)  ,0,0.5,0,1)
-			DescriptionBox:MoveBefore(img_charac)
 			DescriptionBox:SizeTo( 0, DescriptionBox:GetTall(), 0.4, 0, -1,  function ()
 				PersoPANEL:MoveBy(0,PersoPANEL:GetTall() /2,0.5,0.1,1)
 				PersoPANEL:SizeTo(PersoPANEL:GetWide(),0,0.5,0.1,1)
