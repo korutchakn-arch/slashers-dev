@@ -43,8 +43,10 @@ local function OpenCharSelectMenu()
     local chars  = GM.SurvivorClasses
     local numChars = table.Count(chars)
     local rows    = math.ceil(numChars / COLS)
-    local frameW  = COLS * CARD_W + (COLS - 1) * COL_GAP + FRAME_PAD * 2
-    local frameH  = FRAME_PAD + TITLE_H + 16 + rows * CARD_H + (rows - 1) * ROW_GAP + FOOTER_H + FRAME_PAD
+    local baseFrameW = COLS * CARD_W + (COLS - 1) * COL_GAP + FRAME_PAD * 2
+    local frameW  = baseFrameW + 16 -- add room for scrollbar
+    local fullFrameH = FRAME_PAD + TITLE_H + 16 + rows * CARD_H + (rows - 1) * ROW_GAP + FOOTER_H + FRAME_PAD
+    local frameH = math.min(fullFrameH, ScrH() * 0.85)
 
     local frame = vgui.Create("DFrame")
     frame:SetSize(frameW, frameH)
@@ -110,8 +112,18 @@ local function OpenCharSelectMenu()
         end
     end)
 
-    -- Card grid
-    local gridY = FRAME_PAD + TITLE_H + 16
+    -- Scrollable Card grid
+    local scroll = vgui.Create("DScrollPanel", frame)
+    scroll:SetPos(0, FRAME_PAD + TITLE_H + 16)
+    scroll:SetSize(frameW, frameH - (FRAME_PAD + TITLE_H + 16) - FOOTER_H - FRAME_PAD)
+    
+    local sbar = scroll:GetVBar()
+    sbar:SetWide(8)
+    sbar.Paint = function(s, w, h) draw.RoundedBox(4, 0, 0, w, h, Color(4, 8, 24, 200)) end
+    sbar.btnUp.Paint = function(s, w, h) end
+    sbar.btnDown.Paint = function(s, w, h) end
+    sbar.btnGrip.Paint = function(s, w, h) draw.RoundedBox(4, 0, 0, w, h, CLR_BORDER) end
+
     local charList = {}
     for k, v in pairs(chars) do
         table.insert(charList, {key = k, data = v})
@@ -122,7 +134,7 @@ local function OpenCharSelectMenu()
         local col   = idx % COLS
         local row   = math.floor(idx / COLS)
         local cardX = FRAME_PAD + col * (CARD_W + COL_GAP)
-        local cardY = gridY + row * (CARD_H + ROW_GAP)
+        local cardY = row * (CARD_H + ROW_GAP)
         idx = idx + 1
 
         -- Get the class data from GM.CLASS.Survivors for display info
@@ -130,7 +142,7 @@ local function OpenCharSelectMenu()
         local survData = GM.CLASS.Survivors[classID]
         if not survData then continue end
 
-        local card = vgui.Create("DPanel", frame)
+        local card = vgui.Create("DPanel", scroll)
         card:SetPos(cardX, cardY)
         card:SetSize(CARD_W, CARD_H)
         card:SetPaintBackground(false)
