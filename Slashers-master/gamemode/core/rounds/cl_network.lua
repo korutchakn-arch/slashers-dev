@@ -10,6 +10,10 @@ local GM = GM or GAMEMODE
 local function PreStart()
 	-- Clear the waiting screen so it never gets stuck if a round restarts.
 	GM.ROUND.SetupWaiting = false
+	if GM.ROUND.WaitingMusic then
+		GM.ROUND.WaitingMusic:Stop()
+		GM.ROUND.WaitingMusic = nil
+	end
 	GM.ROUND.Active = false
 	GM.ROUND.WaitingPolice = false
 	GM.ROUND.Escape = false
@@ -20,6 +24,10 @@ net.Receive("sls_round_PreStart", PreStart)
 local function PostStart()
 	-- Clear the waiting screen — PostStart means setup is complete.
 	GM.ROUND.SetupWaiting = false
+	if GM.ROUND.WaitingMusic then
+		GM.ROUND.WaitingMusic:FadeOut(1)  -- smooth 1-second fade on the happy path
+		GM.ROUND.WaitingMusic = nil
+	end
 	GM.ROUND.Active = true
 	GM.ROUND.Count = net.ReadInt(16)
 	GM.ROUND.EndTime = net.ReadInt(16)
@@ -59,6 +67,10 @@ local function End()
 	local winTeam
 	-- Clear the waiting screen so it never persists into the end screen.
 	GM.ROUND.SetupWaiting = false
+	if GM.ROUND.WaitingMusic then
+		GM.ROUND.WaitingMusic:Stop()
+		GM.ROUND.WaitingMusic = nil
+	end
 	GM.ROUND.Active = false
 	GM.ROUND.WaitingPolice = false
 	GM.ROUND.Escape = false

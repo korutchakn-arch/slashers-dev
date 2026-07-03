@@ -14,6 +14,14 @@ local function HUDPaint()
 	-- the sync barrier fires PostStart. Prevents staring at a frozen world.
 	-- Disabled by PreStart, PostStart, and End so it can never get stuck.
 	if GM.ROUND.SetupWaiting then
+		-- Start the ambient music exactly once per wait phase.
+		-- The nil-check prevents CreateSound from being called every frame (60+ times/s).
+		if not GM.ROUND.WaitingMusic then
+			GM.ROUND.WaitingMusic = CreateSound(LocalPlayer(), "slashers/music/ambient/waiting_screen_music.mp3")
+			if GM.ROUND.WaitingMusic then
+				GM.ROUND.WaitingMusic:PlayEx(0.6, 100)  -- 60% volume, normal pitch
+			end
+		end
 		surface.SetDrawColor(0, 0, 0, 255)
 		surface.DrawRect(0, 0, ScrW(), ScrH())
 		local waitText = "Waiting for characters..."
