@@ -8,23 +8,9 @@
 local GM = GM or GAMEMODE
 
 function GM.ROUND:ChooseKiller()
-	local candidates = {}
-	for _, v in ipairs(player.GetAll()) do
-		if not v:IsBot() then
-			table.insert(candidates, v)
-		end
-	end
+	local allPlayers = player.GetAll()
 
-	if #candidates == 0 then
-		-- No real players, fall back to a random bot
-		local bots = {}
-		for _, v in ipairs(player.GetAll()) do
-			if v:IsBot() then
-				table.insert(bots, v)
-			end
-		end
-		return table.Random(bots)
-	end
+	if #allPlayers == 0 then return nil end
 
-	return table.Random(candidates)
+	return table.Random(allPlayers)
 end
