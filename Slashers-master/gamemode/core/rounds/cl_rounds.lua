@@ -15,25 +15,12 @@ local function HUDPaint()
 	-- Disabled by PreStart, PostStart, and End so it can never get stuck.
 	if GM.ROUND.SetupWaiting then
 		-- Start the ambient music exactly once per wait phase.
-		-- The string check prevents PlayFile from being called every frame.
-		if GM.ROUND.WaitingMusic == nil then
-			GM.ROUND.WaitingMusic = "loading"
-			sound.PlayFile("sound/slashers/music/ambient/waiting_screen_music.wav", "noplay", function(station, errCode, errStr)
-				if IsValid(station) then
-					station:SetVolume(0.6)
-					station:Play()
-					-- If the blackout ended before the sound loaded, stop it immediately
-					if not GM.ROUND.SetupWaiting then
-						station:Stop()
-						GM.ROUND.WaitingMusic = nil
-					else
-						GM.ROUND.WaitingMusic = station
-					end
-				else
-					print("[Slashers] Error loading waiting music: ", errCode, errStr)
-					GM.ROUND.WaitingMusic = false
-				end
-			end)
+		-- The nil-check prevents CreateSound from being called every frame (60+ times/s).
+		if not GM.ROUND.WaitingMusic then
+			GM.ROUND.WaitingMusic = CreateSound(LocalPlayer(), "slashers/music/ambient/waiting_screen_music.wav")
+			if GM.ROUND.WaitingMusic then
+				GM.ROUND.WaitingMusic:PlayEx(0.6, 100)  -- 60% volume, normal pitch
+			end
 		end
 		surface.SetDrawColor(0, 0, 0, 255)
 		surface.DrawRect(0, 0, ScrW(), ScrH())
