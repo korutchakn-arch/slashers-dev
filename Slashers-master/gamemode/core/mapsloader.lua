@@ -73,12 +73,19 @@ else
 	end
 
 	local function PlayerButtonDown(ply, button)
-		if !IsFirstTimePredicted() then return end
+		if not IsFirstTimePredicted() then return end
 
-		if GM.ROUND.Active && ply:Team() == TEAM_KILLER && button == getMenuKey() then
+		if GM.ROUND.Active and ply:Team() == TEAM_KILLER and button == getMenuKey() then
 			net.Start("sls_mapsloader_useability")
 			net.SendToServer()
-			GM.MAP.Killer:UseAbility( ply )
+			
+			local charKey = ply.ChosenCharacter
+			local abilityRegistry = GAMEMODE.KillerAbilities
+			local ability = abilityRegistry and abilityRegistry[charKey]
+
+			if ability and ability.UseAbility then
+				ability.UseAbility(ply)
+			end
 		end
 	end
 	hook.Add("PlayerButtonDown", "sls_mapsloader_PlayerButtonDown", PlayerButtonDown)
