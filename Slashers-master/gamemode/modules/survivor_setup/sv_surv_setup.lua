@@ -150,7 +150,7 @@ function GM.CLASS:ApplyChosenClasses()
     end
 
     print("[Surv-Setup] Applied chosen classes to " .. applied .. " survivor(s).")
-end)
+end
 
 -- ─────────────────────────────────────────────
 -- Client-side class selection timeout — close survivor menu
