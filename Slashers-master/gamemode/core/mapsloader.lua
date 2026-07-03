@@ -59,7 +59,7 @@ if SERVER then
 	local function UseAbility(len, ply)
 		GM.MAP.Killer:UseAbility( ply )
 	end
-	net.Receive("sls_mapsloader_UseAbility", UseAbility)
+	net.Receive("sls_mapsloader_useability", UseAbility)
 
 else
 

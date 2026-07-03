@@ -50,9 +50,11 @@ function SWEP:SecondaryAttack()
   local trace = self.Owner:GetEyeTrace()
   if self.Owner:GetPos():Distance(trace.HitPos) < self.MaxDistance  and trace.Entity:GetClass() == "sls_motherbates" then
     trace.Entity:Remove()
-    if (GM.MAP) then
-      self.Owner:SetWalkSpeed(GM.MAP.Killer.WalkSpeed)
-      self.Owner:SetRunSpeed(GM.MAP.Killer.WalkSpeed)
+    local charKey = self.Owner.ChosenCharacter
+    local charData = GAMEMODE.KillerCharacters and GAMEMODE.KillerCharacters[charKey]
+    if charData then
+      self.Owner:SetWalkSpeed(charData.walk or 200)
+      self.Owner:SetRunSpeed(charData.run or 240)
     end
     self.Owner:GiveAmmo(1, "ammo_batesmum", true)
   end
