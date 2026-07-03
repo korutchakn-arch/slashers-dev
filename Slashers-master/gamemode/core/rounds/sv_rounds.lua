@@ -87,9 +87,8 @@ function GM.ROUND:Start(forceKiller)
 	for _, v in ipairs(GM.ROUND.Survivors) do
 		v:Spawn()
 		v:SetPos(table.Random(spawnpoints):GetPos())
-		v:Freeze(true)
-		-- BLACKOUT BYPASS: disabled ScreenFade for survivors
-		-- v:ScreenFade(SCREENFADE.IN, Color(0, 0, 0), 2, GM.CONFIG["round_freeze_start"] - 2)
+		-- Survivors are NOT frozen here — they need to be able to move and
+		-- interact with the class selection menu that opens in PreStart.
 		v:SetNWBool("Escaped", false)
 	end
 	GM.CLASS:SetupSurvivors()
@@ -110,14 +109,10 @@ function GM.ROUND:Start(forceKiller)
 	GM.ROUND.Count = GM.ROUND.Count + 1
 	GM.ROUND.EndTime = CurTime() + GM.CONFIG["round_freeze_start"] + GetConVar("slashers_duration_base"):GetFloat() + (#GM.ROUND.Survivors * GetConVar("slashers_duration_addsurv"):GetFloat())
 
-	-- Freeze survivors during the Killer's character + weapon setup phase.
-	-- PostStart is deferred and fired globally from sls_killer_selectweapon
-	-- so all clients receive the correct (chosen) character data.
-	for _, v in ipairs(GM.ROUND.Survivors) do
-		if IsValid(v) then
-			v:Freeze(true)
-		end
-	end
+	-- Survivors are NOT frozen here. They need to be unfrozen during the
+	-- character selection phase so they can open their class menu and pick.
+	-- They will be re-frozen right before sls_round_PostStart fires
+	-- (in sv_setup.lua's weapon-select handler and bot-killer bypass).
 
 	-- Trigger the Setup Pipeline for the Killer
 	if IsValid(GM.ROUND.Killer) then

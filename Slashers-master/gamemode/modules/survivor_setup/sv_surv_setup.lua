@@ -45,15 +45,10 @@ local function OpenSurvivorCharSelect()
     print("[Surv-Setup] Class selection menu sent to " .. #survivors .. " survivor(s).")
 end
 
--- Hook into the killer setup pipeline:
--- After the killer picks their character (not weapon), send the survivor menu.
--- This fires from sv_setup.lua's sls_killer_selectchar handler.
-hook.Add("sls_surv_KillerCharSelected", "sls_SurvSetup_OpenMenu", function(ply)
-    if not IsValid(ply) then return end
-    -- Wait 5 seconds after the killer picks their character before opening survivor menus
-    timer.Simple(5, function()
-        OpenSurvivorCharSelect()
-    end)
+-- Open survivor class selection menu at the same time as the killer's menu —
+-- both fire from sls_round_PreStart, each with their own internal timer.
+hook.Add("sls_round_PreStart", "sls_SurvSetup_OpenMenu", function()
+    OpenSurvivorCharSelect()
 end)
 
 -- ─────────────────────────────────────────────

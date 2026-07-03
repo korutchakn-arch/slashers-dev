@@ -116,6 +116,13 @@ net.Receive("sls_killer_selectchar", function(len, ply)
 		ply.InitialWeapon   = weaponClass
 		ply.HasChosenWeapon = true
 
+		-- Re-freeze survivors right before PostStart fires — they were unfrozen
+		-- during the character/class selection phase and need to stay frozen
+		-- through the cinematic intro window.
+		for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
+			if IsValid(v) then v:Freeze(true) end
+		end
+
 		hook.Run("sls_round_PostStart")
 		net.Start("sls_round_PostStart")
 			net.WriteInt(GAMEMODE.ROUND.Count, 16)
@@ -164,6 +171,13 @@ net.Receive("sls_killer_selectweapon", function(len, ply)
 	ply.HasChosenWeapon = true
 
 	-- ─── 1. FIRE PostStart globally so ALL clients receive correct character data ───
+	-- Re-freeze survivors right before PostStart fires — they were unfrozen
+	-- during the character/class selection phase and need to stay frozen
+	-- through the cinematic intro window.
+	for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
+		if IsValid(v) then v:Freeze(true) end
+	end
+
 	hook.Run("sls_round_PostStart")
 	net.Start("sls_round_PostStart")
 		net.WriteInt(GAMEMODE.ROUND.Count, 16)
