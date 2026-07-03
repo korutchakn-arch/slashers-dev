@@ -124,6 +124,12 @@ local function OpenCharSelectMenu()
 		draw.SimpleText("0:" .. string.format("%02d", timeLeft), "horror1", w / 2, h / 2, Color(r, g, 60, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
+	-- Build character list before the timer Think hook references it
+	local charList = {}
+	for k, v in pairs(chars) do
+		table.insert(charList, {key = k, data = v})
+	end
+
 	local timerThink = 0
 	hook.Add("Think", "sls_CharSelectTimer", function()
 		if not IsValid(frame) then
@@ -153,10 +159,6 @@ local function OpenCharSelectMenu()
 
 	-- Card grid
 	local gridY = FRAME_PAD + TITLE_H + TIMER_H + 16
-	local charList = {}
-	for k, v in pairs(chars) do
-		table.insert(charList, {key = k, data = v})
-	end
 
 	local idx = 0
 	for _, entry in ipairs(charList) do
