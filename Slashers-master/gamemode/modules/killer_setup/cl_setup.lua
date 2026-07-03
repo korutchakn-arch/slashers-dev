@@ -82,7 +82,7 @@ local function OpenCharSelectMenu()
 	local ROW_GAP   = 16
 	local COLS      = 3
 	local rows      = math.ceil(numChars / COLS)
-	local TIMER_H   = 36
+	local TIMER_H   = 48
 	local frameW    = COLS * CARD_W + (COLS - 1) * COL_GAP + FRAME_PAD * 2
 	local frameH    = FRAME_PAD + TITLE_H + TIMER_H + 16 + rows * CARD_H + (rows - 1) * ROW_GAP + FOOTER_H + FRAME_PAD
 
@@ -120,8 +120,8 @@ local function OpenCharSelectMenu()
 	local timeLeft = TIMER_DURATION
 
 	local timerPanel = vgui.Create("DPanel", frame)
-	timerPanel:SetPos((frameW - 80) / 2, FRAME_PAD + TITLE_H + 8)
-	timerPanel:SetSize(80, TIMER_H)
+	timerPanel:SetPos((frameW - 100) / 2, FRAME_PAD + TITLE_H + 8)
+	timerPanel:SetSize(100, TIMER_H)
 	timerPanel.Paint = function(s, w, h)
 		local frac = timeLeft / TIMER_DURATION
 		local r = frac < 0.3 and 255 or math.floor(220 + (1 - frac) * 35)
@@ -181,22 +181,28 @@ local function OpenCharSelectMenu()
 		card:SetSize(CARD_W, CARD_H)
 		card:SetPaintBackground(false)
 
-		-- Cinematic portrait silhouette (fallback colored panel)
+		-- Cinematic portrait silhouette (icon or fallback)
 		local portrait = vgui.Create("DPanel", card)
 		portrait:SetPos(0, 0)
 		portrait:SetSize(CARD_W, 180)
+		local iconMat = Material("icons/icon_" .. entry.key .. ".png")
 		portrait.Paint = function(s, w, h)
 			draw.RoundedBox(4, 0, 0, w, h, Color(20, 8, 8, 255))
 			surface.SetDrawColor(120, 20, 20, 200)
 			surface.DrawOutlinedRect(0, 0, w, h)
-			draw.SimpleText("???", "horrortext", w / 2, h / 2, Color(120, 30, 30, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			if iconMat and not iconMat:IsError() then
+				surface.SetMaterial(iconMat)
+				surface.DrawTexturedRect(w / 2 - 64, h / 2 - 64, 128, 128)
+			else
+				draw.SimpleText("???", "horrortext", w / 2, h / 2, Color(120, 30, 30, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
 		end
 
 		-- Name label
 		local nameLabel = vgui.Create("DLabel", card)
 		nameLabel:SetPos(0, 184)
 		nameLabel:SetSize(CARD_W, 28)
-		nameLabel:SetFont("DermaDefaultBold")
+		nameLabel:SetFont("horrortext")
 		nameLabel:SetText(entry.data.name:upper())
 		nameLabel:SetContentAlignment(5)
 		nameLabel:SetTextColor(Color(230, 60, 60, 255))
