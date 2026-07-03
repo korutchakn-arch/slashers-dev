@@ -255,6 +255,12 @@ if GM.KillerAbilities["myers"] then
     GM.KillerAbilities["myers"].UseAbility = KA_myers_UseAbility
 end
 
+-- Hook Myers ability logic
+hook.Add("Think",                  "sls_ka_myers_Think",           KA_myers_Think)
+hook.Add("PostPlayerDeath",        "sls_ka_myers_PostPlayerDeath", KA_myers_PostPlayerDeath)
+hook.Add("sls_round_PostStart",    "sls_ka_myers_PostStart",       KA_myers_PostStart)
+hook.Add("sls_round_End",          "sls_ka_myers_End",             KA_myers_End)
+
 -----------------------------------------------------------
 -- 7. PROXY ABILITY — Invisibility toggle
 -- Hook: Think (×2), PostPlayerDeath, sls_round_PostStart (×2), sls_round_End, InitPostEntity, ShouldCollide
