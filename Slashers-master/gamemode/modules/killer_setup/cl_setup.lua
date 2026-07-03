@@ -15,6 +15,14 @@ hook.Add("HUDShouldDraw", "sls_KillerSetup_HUD", function(name)
 	if not IsValid(ply) then return end
 	if ply:Team() ~= TEAM_KILLER then return end
 	if hasFinishedSetup ~= true then
+		-- Allow CHudGMod (which powers HUDPaint) to render while the sync barrier
+		-- is active so the black-screen overlay in cl_rounds.lua can draw.
+		-- HUDPaint exits early via `return` after drawing the black rect, so no
+		-- normal HUD content (timers, objectives) can bleed through.
+		if GAMEMODE.ROUND.SetupWaiting and name == "CHudGMod" then
+			return  -- return nil = allow this element
+		end
+		-- Suppress every other HUD element (health, ammo, crosshair, etc.)
 		return false
 	end
 end)
