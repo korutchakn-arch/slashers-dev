@@ -16,7 +16,7 @@ local function HUDPaint()
 	if GM.ROUND.SetupWaiting then
 		surface.SetDrawColor(0, 0, 0, 255)
 		surface.DrawRect(0, 0, ScrW(), ScrH())
-		local waitText = (GM.LANG and GM.LANG:GetString("waiting_for_players")) or "Waiting for characters..."
+		local waitText = "Waiting for characters..."
 		draw.SimpleText(waitText, "horror1", ScrW() / 2, ScrH() / 2, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		return  -- skip the rest of the HUD while waiting
 	end

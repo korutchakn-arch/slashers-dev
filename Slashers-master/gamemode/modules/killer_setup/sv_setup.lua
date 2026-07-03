@@ -39,12 +39,10 @@ local function StartWeaponSelectWatchdog(ply)
 		ply.HasChosenWeapon = true
 
 		-- Signal killer is ready; PostStart only fires once survivors are also done.
+		-- sls_killer_showintro is sent from GM.ROUND:CheckSetupComplete() in sv_rounds.lua
+		-- so the cinematic is always synchronised with PostStart.
 		GAMEMODE.ROUND.KillerReady = true
 		GAMEMODE.ROUND:CheckSetupComplete()
-
-		net.Start("sls_killer_showintro")
-			net.WriteString(ply.ChosenCharacter or "")
-		net.Send(ply)
 	end)
 end
 
@@ -135,18 +133,13 @@ net.Receive("sls_killer_selectweapon", function(len, ply)
 	ply.InitialWeapon   = weaponClass
 	ply.HasChosenWeapon = true
 
-	-- ─── 1. Signal killer ready — PostStart fires only after BOTH sides are done ───
+	-- ─── Signal killer ready — PostStart fires only after BOTH sides are done ───
 	-- CheckSetupComplete() in sv_rounds.lua holds the barrier. Survivors must finish
 	-- their 10-second class-select window before PostStart (and the cinematic) fires.
+	-- sls_killer_showintro is also sent from CheckSetupComplete so the intro is
+	-- guaranteed to reach the killer in the same tick as PostStart.
 	GAMEMODE.ROUND.KillerReady = true
 	GAMEMODE.ROUND:CheckSetupComplete()
-
-	-- ─── 2. Keep the killer frozen until their cinematic finishes ───
-	-- Stage 3: show custom intro screen to the killer only
-	net.Start("sls_killer_showintro")
-		net.WriteString(ply.ChosenCharacter or "")
-	net.Send(ply)
-	print("[Staff-Debug] Server sent showintro to " .. ply:Nick())
 end)
 
 -- ─────────────────────────────────────────────

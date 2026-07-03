@@ -206,6 +206,17 @@ function GM.ROUND:CheckSetupComplete()
 		net.WriteEntity(self.Killer)
 		net.WriteTable(GAMEMODE.CLASS:GetClassIDTable())
 	net.Broadcast()
+
+	-- ─── Send killer intro in the same tick as PostStart ───────────────────
+	-- Keeping showintro here guarantees the cinematic only starts after ALL
+	-- survivors have finished their class-select window. Bot killers are skipped
+	-- because they have no client to receive the net message.
+	if IsValid(self.Killer) and not self.Killer:IsBot() then
+		net.Start("sls_killer_showintro")
+			net.WriteString(self.Killer.ChosenCharacter or "")
+		net.Send(self.Killer)
+		print("[Staff-Debug] Server sent showintro to " .. self.Killer:Nick() .. " via CheckSetupComplete")
+	end
 end
 
 function GM.ROUND:StartWaitingPolice()
