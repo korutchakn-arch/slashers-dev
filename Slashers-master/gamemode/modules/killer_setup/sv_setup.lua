@@ -1,0 +1,188 @@
+-- Slashers — Killer Setup Pipeline (Server)
+
+util.AddNetworkString("sls_killer_opencharselect")
+util.AddNetworkString("sls_killer_selectchar")
+util.AddNetworkString("sls_killer_openweaponselect")
+util.AddNetworkString("sls_killer_selectweapon")
+util.AddNetworkString("sls_killer_showintro")
+util.AddNetworkString("sls_killer_intro_finished")
+util.AddNetworkString("sls_killer_sync_character")
+
+-- Reset state at the start of each round
+hook.Add("sls_round_PreStart", "sls_KillerSetup_Reset", function()
+	for _, ply in ipairs(player.GetAll()) do
+		ply.HasChosenCharacter = false
+		ply.HasChosenWeapon    = false
+		ply.ChosenCharacter    = nil
+	end
+end)
+
+-- Safety: if killer never receives weapon menu within 5s of character selection, resend it
+-- Also set a 30s watchdog to auto-proceed if they never pick a weapon
+local function StartWeaponSelectWatchdog(ply)
+	timer.Remove("sls_KillerSetup_WeaponWatchdog_" .. ply:SteamID64())
+
+	-- Fallback: if no weapon chosen within 30s of character selection, force a default
+	timer.Create("sls_KillerSetup_WeaponWatchdog_" .. ply:SteamID64(), 30, 1, function()
+		if not IsValid(ply) then return end
+		if ply:Team() ~= TEAM_KILLER then return end
+		if ply.HasChosenWeapon then return end
+
+		print("[Setup-Pipeline] WARNING: Killer timed out on weapon selection. Auto-selecting default weapon.")
+
+		local allowed = GAMEMODE.CONFIG["killer_weapons"]
+		local weaponClass = allowed and allowed[1] or "tfa_nmrih_machete"
+
+		ply:Give(weaponClass)
+		ply:SelectWeapon(weaponClass)
+		ply.InitialWeapon   = weaponClass
+		ply.HasChosenWeapon = true
+
+		hook.Run("sls_round_PostStart")
+		net.Start("sls_round_PostStart")
+			net.WriteInt(GAMEMODE.ROUND.Count, 16)
+			net.WriteInt(GAMEMODE.ROUND.EndTime, 16)
+			net.WriteTable(GAMEMODE.ROUND.Survivors)
+			net.WriteEntity(GAMEMODE.ROUND.Killer)
+			net.WriteTable(GAMEMODE.CLASS:GetClassIDTable())
+		net.Broadcast()
+
+		local freezeDur = GAMEMODE.CONFIG["round_freeze_start"] or 10
+		timer.Simple(freezeDur, function()
+			if GAMEMODE.ROUND.Survivors then
+				for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
+					if IsValid(v) then v:Freeze(false) end
+				end
+			end
+		end)
+
+		net.Start("sls_killer_showintro")
+			net.WriteString(ply.ChosenCharacter or "")
+		net.Send(ply)
+	end)
+end
+
+-- ─────────────────────────────────────────────
+-- Stage 2 → Weapon Selection
+-- ─────────────────────────────────────────────
+net.Receive("sls_killer_selectchar", function(len, ply)
+	if not IsValid(ply) then return end
+	if ply:Team() ~= TEAM_KILLER then return end
+	if ply.HasChosenCharacter then return end
+
+	local charKey = net.ReadString()
+	print("[Staff-Debug] Server received character: " .. charKey)
+
+	local charData = GAMEMODE.KillerCharacters[charKey]
+	if not charData then return end
+
+	-- Apply character stats and model
+	ply:SetModel(charData.model)
+	ply:SetupHands()
+	ply:SetWalkSpeed(charData.walk)
+	ply:SetRunSpeed(charData.run)
+	ply.ChosenCharacter    = charKey
+	ply.HasChosenCharacter = true
+
+	-- Keep the killer frozen until the full intro finishes
+	ply:Freeze(true)
+
+	-- ATMOSPHERIC: update global GM.MAP.Killer so other systems see the chosen character
+	GAMEMODE.MAP.Killer = GAMEMODE.MAP.Killer or {}
+	GAMEMODE.MAP.Killer.Name  = charData.name
+	GAMEMODE.MAP.Killer.Model = charData.model
+
+	-- Broadcast character choice to all clients so their HUD/Scoreboard updates in real-time
+	net.Start("sls_killer_sync_character")
+		net.WriteString(charKey)
+	net.Broadcast()
+
+	-- Stage 2: open weapon selection
+	net.Start("sls_killer_openweaponselect")
+	net.Send(ply)
+
+	-- Start 30s watchdog — if killer never picks a weapon, auto-proceed
+	StartWeaponSelectWatchdog(ply)
+	print("[Setup-Pipeline] Weapon selection menu sent. Watchdog started for " .. ply:Nick())
+end)
+
+-- ─────────────────────────────────────────────
+-- Stage 3 → Weapon chosen — fire PostStart globally & send intro
+-- All clients receive the correct (chosen) character data synchronously.
+-- ─────────────────────────────────────────────
+net.Receive("sls_killer_selectweapon", function(len, ply)
+	if not IsValid(ply) then return end
+	if ply:Team() ~= TEAM_KILLER then return end
+	if ply.HasChosenWeapon then return end
+
+	-- Cancel watchdog since weapon was chosen
+	timer.Remove("sls_KillerSetup_WeaponWatchdog_" .. ply:SteamID64())
+	print("[Setup-Pipeline] sls_killer_selectweapon RECEIVED from " .. ply:Nick() .. " — weapon: " .. weaponClass)
+
+	local weaponClass = net.ReadString()
+	print("[Staff-Debug] Server received weapon: " .. weaponClass)
+
+	-- Validate weapon against allowed config list
+	local allowed = GAMEMODE.CONFIG["killer_weapons"]
+	local valid = false
+	for _, class in ipairs(allowed) do
+		if class == weaponClass then
+			valid = true
+			break
+		end
+	end
+	if not valid then
+		print("[Staff-Debug] Selected weapon '" .. weaponClass .. "' not found in config! Falling back to default.")
+		weaponClass = allowed[1] or "tfa_nmrih_machete"
+	end
+
+	-- Give the weapon and finalize
+	ply:Give(weaponClass)
+	ply:SelectWeapon(weaponClass)
+	ply.InitialWeapon   = weaponClass
+	ply.HasChosenWeapon = true
+
+	-- ─── 1. FIRE PostStart globally so ALL clients receive correct character data ───
+	hook.Run("sls_round_PostStart")
+	net.Start("sls_round_PostStart")
+		net.WriteInt(GAMEMODE.ROUND.Count, 16)
+		net.WriteInt(GAMEMODE.ROUND.EndTime, 16)
+		net.WriteTable(GAMEMODE.ROUND.Survivors)
+		net.WriteEntity(GAMEMODE.ROUND.Killer)
+		net.WriteTable(GAMEMODE.CLASS:GetClassIDTable())
+	net.Broadcast()
+
+	-- ─── 2. Unfreeze survivors when cinematic intro window closes ───
+	local freezeDur = GAMEMODE.CONFIG["round_freeze_start"] or 10
+	timer.Simple(freezeDur, function()
+		if GAMEMODE.ROUND.Survivors then
+			for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
+				if IsValid(v) then
+					v:Freeze(false)
+				end
+			end
+		end
+		print("[Setup-Pipeline] Survivors unfrozen after cinematic.")
+	end)
+
+	-- ─── 3. Keep the killer frozen until their cinematic finishes ───
+	-- Stage 3: show custom intro screen to the killer only
+	net.Start("sls_killer_showintro")
+		net.WriteString(ply.ChosenCharacter or "")
+	net.Send(ply)
+	print("[Staff-Debug] Server sent showintro to " .. ply:Nick())
+end)
+
+-- ─────────────────────────────────────────────
+-- Stage 4 → Intro finished — unfreeze the killer
+-- ─────────────────────────────────────────────
+net.Receive("sls_killer_intro_finished", function(len, ply)
+	if not IsValid(ply) then return end
+	if ply:Team() ~= TEAM_KILLER then return end
+
+	-- Cancel watchdog in case the 30s timer fires after intro finished normally
+	timer.Remove("sls_KillerSetup_WeaponWatchdog_" .. ply:SteamID64())
+
+	ply:Freeze(false)
+	print("[Staff-Debug] Killer setup complete. Player unfrozen!")
+end)
