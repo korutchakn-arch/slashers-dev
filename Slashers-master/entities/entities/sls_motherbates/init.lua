@@ -145,7 +145,11 @@ function ENT:Use( activator, caller )
 end
 
 function ENT:OnRemove()
-	if self:IsPlayer() then
-		self:GetOwner():SetWalkSpeed(ply.normWalk)
+	-- Only valid for the entity itself (not a player), so skip the broken self:IsPlayer() guard
+	if self:IsValid() then return end
+	local ply = self:GetOwner()
+	if IsValid(ply) and ply.normWalk then
+		ply:SetWalkSpeed(ply.normWalk)
+		ply:SetRunSpeed(ply.normWalk)
 	end
 end

@@ -46,14 +46,16 @@ end
 function SWEP:Reload()
 end
 
-function SWEP:SecondaryAttack()  
+function SWEP:SecondaryAttack()
   local trace = self.Owner:GetEyeTrace()
   if self.Owner:GetPos():Distance(trace.HitPos) < self.MaxDistance  and trace.Entity:GetClass() == "sls_motherbates" then
     trace.Entity:Remove()
-    if (GM.MAP) then
-      self.Owner:SetWalkSpeed(GM.MAP.Killer.WalkSpeed)
-      self.Owner:SetRunSpeed(GM.MAP.Killer.WalkSpeed)
-    end
+    -- Dynamically look up the killer's base speeds from the character registry
+    local charKey = self.Owner.ChosenCharacter
+    local walkSpeed = GAMEMODE.KillerAbilities[charKey] and GAMEMODE.KillerAbilities[charKey].WalkSpeed or 200
+    local runSpeed  = GAMEMODE.KillerAbilities[charKey] and GAMEMODE.KillerAbilities[charKey].RunSpeed  or 200
+    self.Owner:SetWalkSpeed(walkSpeed)
+    self.Owner:SetRunSpeed(runSpeed)
     self.Owner:GiveAmmo(1, "ammo_batesmum", true)
   end
 end

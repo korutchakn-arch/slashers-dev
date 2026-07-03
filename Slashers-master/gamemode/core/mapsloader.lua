@@ -17,8 +17,6 @@ GM.MAPS = {}
 GM.MAP = {}
 GM.MAP.Killer = {}
 
-function GM.MAP.Killer:UseAbility( ply ) end
-
 -- Get list of valid maps
 for _, v in ipairs(mapsLua) do
 	if table.HasValue(maps, string.StripExtension(v) .. ".bsp") then
@@ -57,9 +55,12 @@ hook.Add("PostGamemodeLoaded","sls_mapsloadData",loadMapsData)
 if SERVER then
 
 	local function UseAbility(len, ply)
-		GM.MAP.Killer:UseAbility( ply )
+		local charKey = ply.ChosenCharacter
+		if GAMEMODE.KillerAbilities[charKey] and GAMEMODE.KillerAbilities[charKey].UseAbility then
+			GAMEMODE.KillerAbilities[charKey].UseAbility(ply)
+		end
 	end
-	net.Receive("sls_mapsloader_UseAbility", UseAbility)
+	net.Receive("sls_mapsloader_useability", UseAbility)
 
 else
 
