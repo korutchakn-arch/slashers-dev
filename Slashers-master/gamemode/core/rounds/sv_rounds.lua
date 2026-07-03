@@ -87,8 +87,13 @@ function GM.ROUND:Start(forceKiller)
 	for _, v in ipairs(GM.ROUND.Survivors) do
 		v:Spawn()
 		v:SetPos(table.Random(spawnpoints):GetPos())
-		-- Survivors are NOT frozen here — they need to be able to move and
-		-- interact with the class selection menu that opens in PreStart.
+		-- Freeze survivors immediately on spawn so they cannot run around the map
+		-- during the killer's character/weapon selection phase.
+		-- MakePopup() in the Derma UI allows UI interaction while the entity is frozen,
+		-- so freezing here is both correct and safe.
+		-- They will be unfrozen by the centralised sls_round_PostStart hook in sv_setup.lua
+		-- after the cinematic intro window expires.
+		v:Freeze(true)
 		v:SetNWBool("Escaped", false)
 	end
 	GM.CLASS:SetupSurvivors()
@@ -109,10 +114,8 @@ function GM.ROUND:Start(forceKiller)
 	GM.ROUND.Count = GM.ROUND.Count + 1
 	GM.ROUND.EndTime = CurTime() + GM.CONFIG["round_freeze_start"] + GetConVar("slashers_duration_base"):GetFloat() + (#GM.ROUND.Survivors * GetConVar("slashers_duration_addsurv"):GetFloat())
 
-	-- Survivors are NOT frozen here. They need to be unfrozen during the
-	-- character selection phase so they can open their class menu and pick.
-	-- They will be re-frozen right before sls_round_PostStart fires
-	-- (in sv_setup.lua's weapon-select handler and bot-killer bypass).
+	-- Survivors are frozen above at spawn time and will be unfrozen by the
+	-- centralised sls_round_PostStart hook in sv_setup.lua after the cinematic.
 
 	-- Trigger the Setup Pipeline for the Killer
 	if IsValid(GM.ROUND.Killer) then

@@ -1,10 +1,11 @@
 -- Slashers — Survivor Setup Pipeline (Server)
 -- Players choose their survivor class via a selection menu.
 -- Pipeline:
---   1. sls_round_PreStart → reset ChosenClass for all players
---   2. 5s after killer opens char select → send sls_surv_opencharselect to all survivors
---   3. Survivor clicks a class → sls_surv_selectclass → store ply.ChosenClass
---   4. sls_round_PostStart (fired by killer_setup) → ApplyChosenClasses() makes everyone re-select their class
+--   1. sls_round_PreStart         → reset ChosenClass for all players
+--   2. sls_surv_KillerCharSelected → killer has picked their character; teams are now
+--                                    fully assigned → open survivor class-select menu
+--   3. sls_surv_selectclass        → survivor clicks a class → store ply.ChosenClass
+--   4. sls_round_PostStart         → ApplyChosenClasses() finalizes every survivor's class
 
 util.AddNetworkString("sls_surv_opencharselect")
 util.AddNetworkString("sls_surv_selectclass")
@@ -51,9 +52,11 @@ local function OpenSurvivorCharSelect()
     print("[Surv-Setup] Class selection menu sent to " .. #survivors .. " survivor(s).")
 end
 
--- Open survivor class selection menu at the same time as the killer's menu —
--- both fire from sls_round_PreStart, each with their own internal timer.
-hook.Add("sls_round_PreStart", "sls_SurvSetup_OpenMenu", function()
+-- Open the survivor class selection menu only AFTER the killer has chosen their
+-- character. By this point GM.CLASS:SetupSurvivors() has already run inside
+-- GM.ROUND:Start(), so ply:Team() == TEAM_SURVIVORS is guaranteed to be correct.
+-- Firing on sls_round_PreStart was the wrong hook because teams aren't assigned yet.
+hook.Add("sls_surv_KillerCharSelected", "sls_SurvSetup_OpenMenu", function(killer)
     OpenSurvivorCharSelect()
 end)
 

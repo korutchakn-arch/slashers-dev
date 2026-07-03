@@ -38,6 +38,8 @@ local function StartWeaponSelectWatchdog(ply)
 		ply.InitialWeapon   = weaponClass
 		ply.HasChosenWeapon = true
 
+		-- Survivor freeze/unfreeze is handled centrally in the sls_round_PostStart
+		-- hook below — do NOT duplicate it here.
 		hook.Run("sls_round_PostStart")
 		net.Start("sls_round_PostStart")
 			net.WriteInt(GAMEMODE.ROUND.Count, 16)
@@ -116,13 +118,8 @@ net.Receive("sls_killer_selectchar", function(len, ply)
 		ply.InitialWeapon   = weaponClass
 		ply.HasChosenWeapon = true
 
-		-- Re-freeze survivors right before PostStart fires — they were unfrozen
-		-- during the character/class selection phase and need to stay frozen
-		-- through the cinematic intro window.
-		for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
-			if IsValid(v) then v:Freeze(true) end
-		end
-
+		-- Survivor freeze/unfreeze is handled centrally in the sls_round_PostStart
+		-- hook below — do NOT duplicate it here.
 		hook.Run("sls_round_PostStart")
 		net.Start("sls_round_PostStart")
 			net.WriteInt(GAMEMODE.ROUND.Count, 16)
@@ -171,13 +168,8 @@ net.Receive("sls_killer_selectweapon", function(len, ply)
 	ply.HasChosenWeapon = true
 
 	-- ─── 1. FIRE PostStart globally so ALL clients receive correct character data ───
-	-- Re-freeze survivors right before PostStart fires — they were unfrozen
-	-- during the character/class selection phase and need to stay frozen
-	-- through the cinematic intro window.
-	for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
-		if IsValid(v) then v:Freeze(true) end
-	end
-
+	-- Survivor freeze/unfreeze is now handled centrally in the sls_round_PostStart
+	-- hook at the bottom of this file, covering ALL paths (normal, bot bypass, watchdog).
 	hook.Run("sls_round_PostStart")
 	net.Start("sls_round_PostStart")
 		net.WriteInt(GAMEMODE.ROUND.Count, 16)
@@ -187,25 +179,44 @@ net.Receive("sls_killer_selectweapon", function(len, ply)
 		net.WriteTable(GAMEMODE.CLASS:GetClassIDTable())
 	net.Broadcast()
 
-	-- ─── 2. Unfreeze survivors when cinematic intro window closes ───
-	local freezeDur = GAMEMODE.CONFIG["round_freeze_start"] or 10
-	timer.Simple(freezeDur, function()
-		if GAMEMODE.ROUND.Survivors then
-			for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
-				if IsValid(v) then
-					v:Freeze(false)
-				end
-			end
-		end
-		print("[Setup-Pipeline] Survivors unfrozen after cinematic.")
-	end)
-
-	-- ─── 3. Keep the killer frozen until their cinematic finishes ───
+	-- ─── 2. Keep the killer frozen until their cinematic finishes ───
 	-- Stage 3: show custom intro screen to the killer only
 	net.Start("sls_killer_showintro")
 		net.WriteString(ply.ChosenCharacter or "")
 	net.Send(ply)
 	print("[Staff-Debug] Server sent showintro to " .. ply:Nick())
+end)
+
+-- ─────────────────────────────────────────────
+-- Centralised survivor freeze/unfreeze for the cinematic window.
+-- Fires on sls_round_PostStart regardless of which path triggered it:
+--   • Normal weapon selection (net.Receive sls_killer_selectweapon)
+--   • Bot killer bypass (inside net.Receive sls_killer_selectchar)
+--   • 30-second weapon watchdog timer
+-- Using GAMEMODE (not GM) for runtime safety.
+-- ─────────────────────────────────────────────
+hook.Add("sls_round_PostStart", "sls_Setup_FreezeSurvivors", function()
+	local gm = GAMEMODE
+	if not gm or not gm.ROUND or not gm.ROUND.Survivors then
+		print("[Setup-Pipeline] GAMEMODE.ROUND.Survivors not ready — skipping survivor freeze.")
+		return
+	end
+
+	-- Freeze all survivors for the cinematic intro window.
+	for _, v in ipairs(gm.ROUND.Survivors) do
+		if IsValid(v) then v:Freeze(true) end
+	end
+	print("[Setup-Pipeline] Survivors frozen for cinematic intro.")
+
+	-- Unfreeze after the cinematic window expires.
+	local freezeDur = (gm.CONFIG and gm.CONFIG["round_freeze_start"]) or 10
+	timer.Simple(freezeDur, function()
+		if not GAMEMODE.ROUND or not GAMEMODE.ROUND.Survivors then return end
+		for _, v in ipairs(GAMEMODE.ROUND.Survivors) do
+			if IsValid(v) then v:Freeze(false) end
+		end
+		print("[Setup-Pipeline] Survivors unfrozen after cinematic.")
+	end)
 end)
 
 -- ─────────────────────────────────────────────
