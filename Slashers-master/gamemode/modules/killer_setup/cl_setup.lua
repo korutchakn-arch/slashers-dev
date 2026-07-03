@@ -137,6 +137,14 @@ local function OpenCharSelectMenu()
 			if timeLeft <= 0 then
 				timeLeft = 0
 				hook.Remove("Think", "sls_CharSelectTimer")
+				-- Auto-select first character on timeout
+				local firstEntry = charList[1]
+				if firstEntry then
+					net.Start("sls_killer_selectchar")
+					net.WriteString(firstEntry.key)
+					net.SendToServer()
+				end
+				frame:Close()
 			end
 		end
 	end)
@@ -291,6 +299,14 @@ local function OpenWeaponSelectMenu()
 			if timeLeft <= 0 then
 				timeLeft = 0
 				hook.Remove("Think", "sls_WeaponSelectTimer")
+				-- Auto-select first weapon on timeout
+				local firstWeapon = weapons[1]
+				if firstWeapon then
+					net.Start("sls_killer_selectweapon")
+					net.WriteString(firstWeapon)
+					net.SendToServer()
+				end
+				frame:Close()
 			end
 		end
 	end)
