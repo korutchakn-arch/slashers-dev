@@ -94,7 +94,7 @@ end
 -- Net:  sls_kability_AddDoor
 -----------------------------------------------------------
 
-local function KA_ghostface_PlayerUse(ply, ent)
+function KA_ghostface_PlayerUse(ply, ent)
     if not GM.ROUND.Active or not IsValid(GM.ROUND.Killer) then return end
     if ply:Team() ~= TEAM_SURVIVORS then return end
     if ply.ClassID == CLASS_SURV_SHY then return end
@@ -128,7 +128,7 @@ end
 -- Net:  sls_kability_AddStep
 -----------------------------------------------------------
 
-local function KA_jason_PlayerFootstep(ply, pos, foot, sound, volume, filter)
+function KA_jason_PlayerFootstep(ply, pos, foot, sound, volume, filter)
     -- Suppress footstep sound for invisible (alpha-0) players
     if ply:GetColor().a == 0 then return true end
     if not GM.ROUND.Active or not IsValid(GM.ROUND.Killer) then return end
@@ -144,7 +144,7 @@ local function KA_jason_PlayerFootstep(ply, pos, foot, sound, volume, filter)
 end
 
 -- Separate hook entry to suppress footstep sounds for alpha-0 players
-local function KA_jason_CDisableFootsteps(ply, pos, foot, sound, volume, filter)
+function KA_jason_CDisableFootsteps(ply, pos, foot, sound, volume, filter)
     if ply:GetColor().a == 0 then
         return true
     end
@@ -196,7 +196,7 @@ function KA_myers_UseAbility(ply, selfRef)
     end)
 end
 
-local function KA_myers_Think()
+function KA_myers_Think()
     local curtime = CurTime()
     if not GM.ROUND.Active or not IsValid(GM.ROUND.Killer) then
         myersAbilityActivated = false
@@ -224,7 +224,7 @@ local function KA_myers_Think()
     end
 end
 
-local function KA_myers_PostPlayerDeath(ply)
+function KA_myers_PostPlayerDeath(ply)
     if GM.ROUND.Active and IsValid(GM.ROUND.Killer) and GM.ROUND.Killer:Team() == TEAM_KILLER and ply == VictimMyers then
         VictimMyers = findVictim()
         if not IsValid(VictimMyers) then
@@ -235,12 +235,12 @@ local function KA_myers_PostPlayerDeath(ply)
     end
 end
 
-local function KA_myers_PostStart()
+function KA_myers_PostStart()
     if not IsValid(GM.ROUND.Killer) then return end
     VictimMyers = findVictim()
 end
 
-local function KA_myers_End()
+function KA_myers_End()
     myersAbilityActivated = false
     lastRequestMyers = 0
     if IsValid(GM.ROUND.Killer) then
@@ -273,7 +273,7 @@ local function ResponsePlayerSeeKiller()
 end
 net.Receive("sls_kability_survivorseekiller", ResponsePlayerSeeKiller)
 
-local function KA_proxy_UpdateKillerInView()
+function KA_proxy_UpdateKillerInView()
     local curtime = CurTime()
     if LastKillerInView > curtime - 0.5 then
         KillerInView = true
@@ -352,15 +352,15 @@ local function ResetProxyVisibility()
     net.Send(GM.ROUND.Killer)
 end
 
-local function KA_proxy_ResetViewKiller(ply)
+function KA_proxy_ResetViewKiller(ply)
     ResetProxyVisibility()
 end
 
-local function KA_proxy_ResetViewKillerAfterEnd()
+function KA_proxy_ResetViewKillerAfterEnd()
     ResetProxyVisibility()
 end
 
-local function KA_proxy_sendPosWhenInvisible()
+function KA_proxy_sendPosWhenInvisible()
     if not IsValid(GM.ROUND.Killer) or not GM.ROUND.Active then
         if timerSendProxy < CurTime() then
             timerSendProxy = CurTime() + 1
@@ -393,7 +393,7 @@ local function KA_proxy_sendPosWhenInvisible()
     net.Send(shygirl)
 end
 
-local function KA_proxy_initCol()
+function KA_proxy_initCol()
     for _, v in ipairs(ents.GetAll()) do
         local cls = v:GetClass()
         if v:IsPlayer() or cls == "prop_door_rotating" then
@@ -402,7 +402,7 @@ local function KA_proxy_initCol()
     end
 end
 
-local function KA_proxy_ShouldCollide(ent1, ent2)
+function KA_proxy_ShouldCollide(ent1, ent2)
     -- Alpha-0 players pass through everything
     if ent1:IsPlayer() and ent1:GetColor().a == 0 then return false end
     if ent2:IsPlayer() and ent2:GetColor().a == 0 then return false end
@@ -431,7 +431,7 @@ end
 
 local timerTrap = 0
 
-local function KA_intruder_detectProximityTraps()
+function KA_intruder_detectProximityTraps()
     if not IsValid(GM.ROUND.Killer) or not GM.ROUND.Active then return end
     if timerTrap >= CurTime() then return end
     timerTrap = CurTime() + 1
