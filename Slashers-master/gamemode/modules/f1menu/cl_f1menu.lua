@@ -96,6 +96,7 @@ function ShowPlayerScreen(TeamName,TeamText,CharacName,CharacText,ImageCharac,Ti
 	if Time ~= 0 then
 		timed = true
 		timer.Simple( Time-0.3, function()
+			if not IsValid(img_charac) then return end
 			img_charac:MoveTo((ScrW() /2) - (img_charac:GetWide()/2)  ,0,0.5,0,1)
 			DescriptionBox:MoveTo((ScrW() /2) - (DescriptionBox:GetWide()/2.5)  ,0,0.5,0,1)
 			DescriptionBox:SizeTo( 0, DescriptionBox:GetTall(), 0.4, 0, -1,  function ()
