@@ -107,11 +107,10 @@ GM.KillerAbilities["proxy"] = {
     desc = "Vanish from sight — reappear to strike.",
     hooks = {
         -- Server
-        {name = "Think",              tag = "sls_ka_proxy_UpdateKillerInView"},
+        {name = "Think",              tag = "sls_ka_proxy_Think"},
         {name = "PostPlayerDeath",    tag = "sls_ka_proxy_ResetViewKiller"},
         {name = "sls_round_PostStart", tag = "sls_ka_proxy_ResetViewKillerAfterEnd"},
         {name = "sls_round_End",      tag = "sls_ka_proxy_ResetViewKillerAfterEnd"},
-        {name = "Think",              tag = "sls_ka_proxy_sendPosWhenInvisible"},
         {name = "InitPostEntity",     tag = "sls_ka_proxy_initCol"},
         {name = "sls_round_PostStart", tag = "sls_ka_proxy_initCol"},
         {name = "ShouldCollide",      tag = "sls_ka_proxy_ShouldCollide"},

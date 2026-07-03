@@ -279,13 +279,44 @@ local function ResponsePlayerSeeKiller()
 end
 net.Receive("sls_kability_survivorseekiller", ResponsePlayerSeeKiller)
 
-function KA_proxy_UpdateKillerInView()
+local function KA_proxy_UpdateKillerInView()
     local curtime = CurTime()
     if LastKillerInView > curtime - 0.5 then
         KillerInView = true
     else
         KillerInView = false
     end
+end
+
+--[[
+    KA_proxy_DeactivateAbility
+    Shared deactivation logic for the Proxy's invisibility.
+    Called when the Proxy manually toggles off, or when a survivor's
+    gaze forces the ability to break while he is invisible.
+]]
+local function KA_proxy_DeactivateAbility(ply)
+    ply:EmitSound("slashers/effects/proxy_power_off.wav")
+
+    timer.Simple(1, function()
+        if not IsValid(ply) then return end
+        if ply.InitialWeapon and ply.InitialWeapon ~= "" then
+            ply:Give(ply.InitialWeapon)
+        end
+        ply:SetColor(KNormal)
+        local charKey  = ply.ChosenCharacter
+        local charData = charKey and GAMEMODE.KillerCharacters and GAMEMODE.KillerCharacters[charKey]
+        local baseWalk = charData and charData.walk or 200
+        local baseRun  = charData and charData.run  or 200
+        ply:SetWalkSpeed(baseWalk)
+        ply:SetRunSpeed(baseRun)
+        ply:DrawShadow(true)
+        ply:SetRenderMode(RENDERMODE_TRANSALPHA)
+        ply.InvisibleActive = false
+
+        net.Start("sls_kability_Invisible")
+            net.WriteBool(false)
+        net.Send(ply)
+    end)
 end
 
 function KA_proxy_UseAbility(ply)
@@ -324,53 +355,30 @@ function KA_proxy_UseAbility(ply)
         end)
 
     elseif ply.InvisibleActive and not KillerInView then
-        ply:EmitSound("slashers/effects/proxy_power_off.wav")
-
-        timer.Simple(1, function()
-            if not IsValid(ply) then return end
-            if ply.InitialWeapon and ply.InitialWeapon ~= "" then
-                ply:Give(ply.InitialWeapon)
-            end
-            ply:SetColor(KNormal)
-            local charKey = ply.ChosenCharacter
-            local charData = charKey and GAMEMODE.KillerCharacters and GAMEMODE.KillerCharacters[charKey]
-            local baseWalk = charData and charData.walk or 200
-            local baseRun = charData and charData.run or 200
-            ply:SetWalkSpeed(baseWalk)
-            ply:SetRunSpeed(baseRun)
-            ply:DrawShadow(true)
-            ply:SetRenderMode(RENDERMODE_TRANSALPHA)
-            ply.InvisibleActive = false
-
-            net.Start("sls_kability_Invisible")
-                net.WriteBool(false)
-            net.Send(ply)
-        end)
+        KA_proxy_DeactivateAbility(ply)
     end
 end
 
-local function ResetProxyVisibility()
-    for _, v in ipairs(player.GetAll()) do
-        v:DrawShadow(true)
-        v:SetRenderMode(RENDERMODE_TRANSALPHA)
-        v:SetColor(Color(255, 255, 255))
+--[[
+    KA_proxy_Think
+    Runs every server tick for the Proxy. Handles:
+      1. Updating KillerInView from client gaze reports.
+      2. Forced ability interruption when a survivor looks at the invisible Proxy.
+      3. Broadcasting the Proxy's position to the shy girl while he is invisible.
+]]
+function KA_proxy_Think()
+    -- Part 1: Update gaze state
+    KA_proxy_UpdateKillerInView()
+
+    -- Part 2: Force-interrupt invisibility if a survivor is looking at the invisible Proxy
+    if KillerInView and GM.ROUND.Active and IsValid(GM.ROUND.Killer) then
+        local killer = GM.ROUND.Killer
+        if killer.InvisibleActive then
+            KA_proxy_DeactivateAbility(killer)
+        end
     end
-    if not IsValid(GM.ROUND.Killer) then return end
-    GM.ROUND.Killer.InvisibleActive = false
-    net.Start("sls_kability_Invisible")
-        net.WriteBool(false)
-    net.Send(GM.ROUND.Killer)
-end
 
-function KA_proxy_ResetViewKiller(ply)
-    ResetProxyVisibility()
-end
-
-function KA_proxy_ResetViewKillerAfterEnd()
-    ResetProxyVisibility()
-end
-
-function KA_proxy_sendPosWhenInvisible()
+    -- Part 3: Send killer position to the shy girl while invisible (was KA_proxy_sendPosWhenInvisible)
     if not IsValid(GM.ROUND.Killer) or not GM.ROUND.Active then
         if timerSendProxy < CurTime() then
             timerSendProxy = CurTime() + 1
@@ -401,6 +409,27 @@ function KA_proxy_sendPosWhenInvisible()
         net.WriteVector(killer:GetPos())
         net.WriteBool(true)
     net.Send(shygirl)
+end
+
+local function ResetProxyVisibility()
+    for _, v in ipairs(player.GetAll()) do
+        v:DrawShadow(true)
+        v:SetRenderMode(RENDERMODE_TRANSALPHA)
+        v:SetColor(Color(255, 255, 255))
+    end
+    if not IsValid(GM.ROUND.Killer) then return end
+    GM.ROUND.Killer.InvisibleActive = false
+    net.Start("sls_kability_Invisible")
+        net.WriteBool(false)
+    net.Send(GM.ROUND.Killer)
+end
+
+function KA_proxy_ResetViewKiller(ply)
+    ResetProxyVisibility()
+end
+
+function KA_proxy_ResetViewKillerAfterEnd()
+    ResetProxyVisibility()
 end
 
 function KA_proxy_initCol()
