@@ -143,7 +143,7 @@ SWEP.VElements = {
 		rel              = "",
 		pos              = Vector(0, 0, 0),   -- tweak in-game
 		angle            = Angle(0, 0, 0),   -- tweak in-game
-		size             = Vector(1, 1, 1),
+		size             = Vector(0.02, 0.02, 0.02), -- Blender 1m→Source unit correction
 		color            = Color(255, 255, 255, 255),
 		surpresslightning = true,
 		material         = "",
@@ -179,7 +179,7 @@ SWEP.WElements = {
 		rel              = "",
 		pos              = Vector(0, 0, 0),   -- tweak in-game
 		angle            = Angle(0, 0, 0),   -- tweak in-game
-		size             = Vector(1, 1, 1),
+		size             = Vector(0.02, 0.02, 0.02), -- Blender 1m→Source unit correction
 		color            = Color(255, 255, 255, 255),
 		surpresslightning = true,
 		material         = "",
@@ -224,4 +224,10 @@ end
 -- ─────────────────────────────────────────────────────────────────────────────
 if CLIENT then
 	-- Let TFA base natively handle ShowViewModel = false and VElements rendering.
+
+	-- Suppress the third-person base crowbar while leaving TFA's WElements
+	-- pipeline (which runs via PostDrawOpaqueRenderables) completely intact.
+	function SWEP:DrawWorldModel()
+		-- Intentionally empty — WElements["phone"] handles third-person rendering.
+	end
 end
