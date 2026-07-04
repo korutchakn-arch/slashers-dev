@@ -40,7 +40,7 @@ SWEP.Author          = "Slashers Dev"
 -- (idle, draw, holster) so the animation parser never crashes.
 -- It is completely hidden at runtime (see ShowViewModel + PreDrawViewModel below).
 SWEP.ViewModel       = "models/weapons/c_crowbar.mdl"
-SWEP.ViewModelFOV    = 50
+SWEP.ViewModelFOV    = 70
 SWEP.WorldModel      = "models/weapons/w_crowbar.mdl"
 
 SWEP.HoldType        = "slam"
@@ -236,6 +236,16 @@ if CLIENT then
 			vm:SetRenderMode(RENDERMODE_TRANSALPHA)
 		end
 		-- No return value — lets the engine proceed so ViewModelDrawn fires.
+	end
+
+	-- Reset the material immediately after the weapon draws, 
+	-- so the player's c_hands (which draw right after) don't turn invisible!
+	function SWEP:PostDrawViewModel(vm, wep, ply)
+		if IsValid(vm) then
+			vm:SetMaterial("")
+			vm:SetColor(Color(255, 255, 255, 255))
+			vm:SetRenderMode(RENDERMODE_NORMAL)
+		end
 	end
 
 	-- TFA requires calling the base method here to render WElements.
