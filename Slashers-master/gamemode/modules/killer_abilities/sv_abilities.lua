@@ -459,12 +459,27 @@ function KA_proxy_initCol()
 end
 
 function KA_proxy_ShouldCollide(ent1, ent2)
-    -- Alpha-0 players pass through everything
-    if ent1:IsPlayer() and ent1:GetColor().a == 0 then return false end
-    if ent2:IsPlayer() and ent2:GetColor().a == 0 then return false end
-    -- Alpha-0 players pass through doors
-    if ent1:IsPlayer() and ent1:GetColor().a == 0 and ent2:GetClass() == "prop_door_rotating" then return false end
-    if ent2:IsPlayer() and ent2:GetColor().a == 0 and ent1:GetClass() == "prop_door_rotating" then return false end
+    -- Identify if either entity is an invisible (alpha-0) player
+    local invisPlayer, other
+    if ent1:IsPlayer() and ent1:GetColor().a == 0 then
+        invisPlayer = ent1
+        other = ent2
+    elseif ent2:IsPlayer() and ent2:GetColor().a == 0 then
+        invisPlayer = ent2
+        other = ent1
+    else
+        return true -- Neither entity is an invisible player; use default collision
+    end
+
+    -- Always collide with the world (worldspawn) to prevent falling out of bounds
+    if other == game.GetWorld() then return true end
+
+    -- Pass through other players and rotating doors only
+    if other:IsPlayer() or other:GetClass() == "prop_door_rotating" then
+        return false
+    end
+
+    -- Collide normally with everything else (solid props, geometry, etc.)
     return true
 end
 
