@@ -38,9 +38,9 @@ SWEP.Author           = "Slashers Dev"
 
 -- Generic fallback models — hidden at runtime via alpha/DrawWorldModel suppression.
 -- The phone prop is rendered entirely through VElements / WElements below.
-SWEP.ViewModel        = "models/weapons/v_stunbaton.mdl"
+SWEP.ViewModel        = "models/weapons/v_crowbar.mdl"
 SWEP.ViewModelFOV     = 50
-SWEP.WorldModel       = "models/weapons/w_stunbaton.mdl"
+SWEP.WorldModel       = "models/weapons/w_crowbar.mdl"
 
 SWEP.HoldType         = "slam"
 SWEP.DefaultHoldType  = "slam"
@@ -74,6 +74,13 @@ SWEP.Primary.SpreadMultiplierMax = 1
 SWEP.Primary.SpreadIncrement     = 1
 SWEP.Primary.Spread              = 0.01
 SWEP.Primary.Accuracy            = 0.01
+
+SWEP.Primary.ClipSize = -1
+SWEP.Primary.DefaultClip = -1
+SWEP.Primary.Ammo = "none"
+SWEP.Secondary.ClipSize = -1
+SWEP.Secondary.DefaultClip = -1
+SWEP.Secondary.Ammo = "none"
 
 SWEP.Primary.Reach      = 40
 SWEP.Primary.RPM        = 60
