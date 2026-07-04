@@ -225,9 +225,11 @@ end
 if CLIENT then
 	-- Let TFA base natively handle ShowViewModel = false and VElements rendering.
 
-	-- Suppress the third-person base crowbar while leaving TFA's WElements
-	-- pipeline (which runs via PostDrawOpaqueRenderables) completely intact.
+	-- We can't leave DrawWorldModel empty, otherwise WElements never draw!
+	-- TFA base requires calling the base method to render WElements.
 	function SWEP:DrawWorldModel()
-		-- Intentionally empty — WElements["phone"] handles third-person rendering.
+		if self.BaseClass and self.BaseClass.DrawWorldModel then
+			self.BaseClass.DrawWorldModel(self)
+		end
 	end
 end
