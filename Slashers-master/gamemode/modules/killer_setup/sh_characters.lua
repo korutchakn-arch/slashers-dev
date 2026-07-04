@@ -9,7 +9,8 @@ GM.KillerCharacters = {
 		walk  = 190,
 		run   = 240,
 		desc  = "You can see doors opening and closing. Strike from the shadows.",
-		icon  = "icons/icon_ghostface.png"
+		icon  = "icons/icon_ghostface.png",
+		extra_weapons = {"weapon_ghostface_phone"}
 	},
 	["jason"] = {
 		name  = "Jason",
