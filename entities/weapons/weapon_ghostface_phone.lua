@@ -32,6 +32,7 @@ SWEP.Base            = "tfa_nmrimelee_base"
 SWEP.Category        = "TFA NMRIH"
 SWEP.Spawnable       = false
 SWEP.AdminSpawnable  = true
+SWEP.Slot            = 1    -- HUD Slot 2 (0-indexed); keeps the phone out of the primary weapon slot
 
 SWEP.PrintName       = "Phone"
 SWEP.Author          = "Slashers Dev"

@@ -379,22 +379,10 @@ local function KA_ghostface_phone_HUDPaintBackground()
     local iconSize = 64
 
     -- Draw target icon centred on the survivor's world position
-    surface.SetDrawColor(Color(255, 60, 60, 220))
+    surface.SetDrawColor(Color(255, 255, 255, 255))
     surface.SetMaterial(ICON_PHONE_REVEAL)
     surface.DrawTexturedRect(screenPos.x - iconSize * 0.5, screenPos.y - iconSize * 0.5, iconSize, iconSize)
 
-    -- Draw survivor name below the icon
-    draw.SimpleTextOutlined(
-        ghostface_phoneRevealName,
-        "DermaDefaultBold",
-        screenPos.x,
-        screenPos.y + iconSize * 0.5 + 4,
-        Color(255, 60, 60, 220),
-        TEXT_ALIGN_CENTER,
-        TEXT_ALIGN_TOP,
-        1,
-        Color(0, 0, 0, 180)
-    )
 
     -- Draw a small pulsing corner indicator so Ghostface knows the ability fired
     local pulseAlpha = math.abs(math.sin(CurTime() * 3)) * 200 + 55
